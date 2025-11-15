@@ -11,10 +11,13 @@ arch:
   - amd64
   - i386
 init: false
+boot : auto
+homeassistant_api: true
 map:
   - share:rw
 options:
   message: "Hello world..."
+  update_interval: 60
 schema:
-  message: "str?"
-# image: "ghcr.io/home-assistant/{arch}-addon-hdf5-datalogger"
+  message: str
+  update_interval: int
