@@ -3,90 +3,116 @@ import os
 import json
 import requests
 from datetime import datetime
+from collections import defaultdict
 
-OUTPUT_FILE = "/share/example_addon_output.txt"
 API_URL = "http://supervisor/core/api"
 TOKEN = os.getenv("SUPERVISOR_TOKEN")
+OPTIONS_PATH = "/data/options.json"
 
 if not TOKEN:
-    raise SystemExit("ERROR: SUPERVISOR_TOKEN is missing. Check 'homeassistant_api: true' in config.yaml.")
+    raise SystemExit("ERROR: SUPERVISOR_TOKEN missing. Ensure homeassistant_api: true in config.yaml.")
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
     "Content-Type": "application/json",
 }
 
-def ha_api(endpoint):
-    """Call Home Assistant Supervisor API."""
-    url = f"{API_URL}{endpoint}"
-    response = requests.get(url, headers=HEADERS)
-    response.raise_for_status()
-    return response.json()
+def load_options():
+    # Valori di default
+    opts = {
+        "output_path": "/share/example_addon_output.txt",
+        "include_domains": [],
+        "include_attributes": [],
+        "max_entities": 0,
+    }
+    try:
+        with open(OPTIONS_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        opts.update({k: data.get(k, opts[k]) for k in opts.keys()})
+    except Exception:
+        pass
+    return opts
 
-def write_line(text):
-    """Write a line to the output file."""
-    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
-        f.write(text + "\n")
+def get_states():
+    url = f"{API_URL}/states"
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    return r.json()
 
-def start_new_file():
-    """Reset the file and write header."""
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("===== HOME ASSISTANT STRUCTURE REPORT =====\n")
-        f.write(f"Generated at: {datetime.now()}\n\n")
+def domain_of(entity_id: str) -> str:
+    return entity_id.split(".", 1)[0] if "." in entity_id else "unknown"
+
+def should_include_domain(domain: str, include_domains: list) -> bool:
+    if not include_domains:
+        return True  # nessun filtro => includi tutti
+    return domain in include_domains
+
+def format_state_line(s: dict, include_attrs: list) -> list:
+    lines = []
+    entity_id = s.get("entity_id", "unknown")
+    state = s.get("state", "unknown")
+    attrs = s.get("attributes", {}) or {}
+
+    friendly = attrs.get("friendly_name")
+    lines.append(f"- {entity_id}")
+    lines.append(f"  state: {state}")
+    if friendly:
+        lines.append(f"  name: {friendly}")
+
+    # Attributi extra richiesti
+    for key in include_attrs:
+        if key in attrs:
+            val = attrs.get(key)
+            lines.append(f"  {key}: {val}")
+    return lines
+
+def write_report(output_path: str, grouped: dict, include_attrs: list, max_entities: int):
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("===== HOME ASSISTANT STATES REPORT =====\n")
+        f.write(f"Generated at: {datetime.utcnow().isoformat()}Z\n\n")
+
+        for domain in sorted(grouped.keys()):
+            entities = sorted(grouped[domain], key=lambda x: x.get("entity_id",""))
+            total = len(entities)
+            f.write(f"=== DOMAIN: {domain} ({total}) ===\n")
+            if max_entities and total > max_entities:
+                entities = entities[:max_entities]
+                f.write(f"(showing first {max_entities} entities)\n")
+
+            for s in entities:
+                lines = format_state_line(s, include_attrs)
+                for ln in lines:
+                    f.write(ln + "\n")
+                f.write("\n")
+
+        f.write("===== END =====\n")
 
 def main():
-    start_new_file()
+    opts = load_options()
+    output_path = opts["output_path"]
+    include_domains = opts["include_domains"]
+    include_attrs = opts["include_attributes"]
+    max_entities = opts["max_entities"]
 
-    # 1. AREE
-    write_line("===== AREE =====")
     try:
-        areas = ha_api("/config/area_registry/list")
-        for area in areas:
-            name = area.get("name")
-            area_id = area.get("area_id")
-            write_line(f"- {name} (area_id: {area_id})")
-    except Exception as err:
-        write_line(f"ERROR retrieving areas: {err}")
-    write_line("")
+        all_states = get_states()
+    except Exception as e:
+        # In caso di errore rete/auth, lascia un messaggio semplice nel file
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("===== HOME ASSISTANT STATES REPORT =====\n")
+            f.write(f"Generated at: {datetime.utcnow().isoformat()}Z\n\n")
+            f.write(f"ERROR fetching /states: {e}\n")
+            f.write("===== END =====\n")
+        return
 
-    # 2. DISPOSITIVI
-    write_line("===== DISPOSITIVI =====")
-    try:
-        devices = ha_api("/config/device_registry/list")
-        for dev in devices:
-            name = dev.get("name_by_user") or dev.get("name")
-            device_id = dev.get("id")
-            area_id = dev.get("area_id")
-            write_line(f"- {name} (device_id: {device_id}, area: {area_id})")
-    except Exception as err:
-        write_line(f"ERROR retrieving devices: {err}")
-    write_line("")
+    grouped = defaultdict(list)
+    for s in all_states:
+        eid = s.get("entity_id", "")
+        d = domain_of(eid)
+        if should_include_domain(d, include_domains):
+            grouped[d].append(s)
 
-    # 3. ENTITÀ
-    write_line("===== ENTITÀ =====")
-    try:
-        entities = ha_api("/config/entity_registry/list")
-        for ent in entities:
-            entity_id = ent.get("entity_id")
-            device_id = ent.get("device_id")
-            area_id = ent.get("area_id")
-            write_line(f"- {entity_id} (device_id: {device_id}, area_id: {area_id})")
-    except Exception as err:
-        write_line(f"ERROR retrieving entities: {err}")
-    write_line("")
-
-    # 4. STATI
-    write_line("===== STATI =====")
-    try:
-        states = ha_api("/states")
-        for s in states:
-            entity_id = s.get("entity_id")
-            state = s.get("state")
-            write_line(f"- {entity_id}: {state}")
-    except Exception as err:
-        write_line(f"ERROR retrieving states: {err}")
-
-    write_line("\n===== END =====")
+    write_report(output_path, grouped, include_attrs, max_entities)
 
 if __name__ == "__main__":
     main()

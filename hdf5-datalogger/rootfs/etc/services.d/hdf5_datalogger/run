@@ -1,12 +1,24 @@
-#!/usr/bin/with-contenv bashio
-# ==============================================================================
-# Start the example service
-# s6-overlay docs: https://github.com/just-containers/s6-overlay
-# ==============================================================================
-
 #!/usr/bin/with-contenv bash
+set -e
+
+read_interval() {
+  if [ -f /data/options.json ]; then
+    # Default 60 se non presente/valido
+    local val
+    val=$(jq -r '.update_interval // 60' /data/options.json 2>/dev/null || echo 60)
+    # fallback se non numerico
+    if ! echo "$val" | grep -Eq '^[0-9]+$'; then
+      echo 60
+    else
+      echo "$val"
+    fi
+  else
+    echo 60
+  fi
+}
 
 while true; do
-    python3 /usr/bin/logger.py
-    sleep 60
+  python3 /usr/bin/logger.py || true
+  SLEEP_SECS=$(read_interval)
+  sleep "$SLEEP_SECS"
 done

@@ -1,23 +1,34 @@
-# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
-name: HDF5 DataLogger
-version: "0.1.8"
-slug: hdf5_datalogger
-description: HDF5 DataLogger add-on
-url: "https://github.com/GGR07/hdf5-datalogger-addon/tree/main/hdf5-datalogger"
+name: "HDF5 DataLogger"
+version: "0.2.0"
+slug: "hdf5_datalogger"
+description: "Logs Home Assistant states via REST and writes a human-readable report."
+init: false
 arch:
-  - armhf
-  - armv7
   - aarch64
   - amd64
+  - armhf
+  - armv7
   - i386
-init: false
-boot : auto
+startup: services
+boot: auto
 homeassistant_api: true
+apparmor: true
+
 map:
   - share:rw
+
 options:
-  message: "Hello world..."
   update_interval: 60
+  output_path: "/share/TEST_V_0_2_0.txt"
+  include_domains: []         # e.g. ["sensor","binary_sensor","light"]
+  include_attributes: []      # e.g. ["friendly_name","unit_of_measurement","device_class"]
+  max_entities: 0             # 0 = nessun limite
+
 schema:
-  message: str
   update_interval: int
+  output_path: str
+  include_domains:
+    - str
+  include_attributes:
+    - str
+  max_entities: int
