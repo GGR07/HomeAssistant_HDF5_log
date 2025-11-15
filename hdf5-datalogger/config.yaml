@@ -17,4 +17,4 @@ options:
   message: "Hello world..."
 schema:
   message: "str?"
-image: "ghcr.io/home-assistant/{arch}-addon-hdf5-datalogger"
+# image: "ghcr.io/home-assistant/{arch}-addon-hdf5-datalogger"
