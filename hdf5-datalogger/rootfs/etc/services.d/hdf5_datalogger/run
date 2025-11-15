@@ -7,6 +7,6 @@
 #!/usr/bin/with-contenv bash
 
 while true; do
-    python3 /usr/bin/logger.py
+    python /usr/bin/logger.py
     sleep 60
 done
