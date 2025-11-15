@@ -122,4 +122,124 @@ def build_included_domains(opts: dict, available_domains: set) -> set:
 
 def get_states():
     url = f"{API_URL}/states"
-    r = requests.get(ur
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+def domain_of(entity_id: str) -> str:
+    return entity_id.split(".", 1)[0].lower() if "." in entity_id else "unknown"
+
+def format_state_lines_all_attrs(s: dict) -> list:
+    """Return lines for one entity, logging ALL attributes."""
+    lines = []
+    entity_id = s.get("entity_id", "unknown")
+    state = s.get("state", "unknown")
+    attrs = s.get("attributes", {}) or {}
+
+    friendly = attrs.get("friendly_name")
+
+    lines.append(f"- {entity_id}")
+    lines.append(f"  state: {state}")
+    if friendly:
+        lines.append(f"  name: {friendly}")
+
+    # Log ALL attributes (skip friendly_name to avoid duplicate)
+    for key in sorted(attrs.keys()):
+        if key == "friendly_name":
+            continue
+        val = attrs[key]
+        # Serialize dict/list nicely on one line
+        if isinstance(val, (dict, list)):
+            try:
+                val_str = json.dumps(val, ensure_ascii=False, separators=(",", ":"))
+            except Exception:
+                val_str = str(val)
+        else:
+            val_str = str(val)
+        lines.append(f"  {key}: {val_str}")
+
+    return lines
+
+def write_report(
+    output_path: str,
+    grouped: dict,
+    max_entities: int,
+    available_domains: set,
+    included_domains_effective: set,
+):
+    # timezone-aware UTC timestamp, with "Z"
+    ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("===== HOME ASSISTANT STATES REPORT =====\n")
+        f.write(f"Generated at: {ts}\n\n")
+
+        # Debug/help header
+        if included_domains_effective:
+            f.write(
+                "Included domains: "
+                + ", ".join(sorted(included_domains_effective))
+                + "\n"
+            )
+        else:
+            f.write("Included domains: (all)\n")
+        f.write("Available domains: " + ", ".join(sorted(available_domains)) + "\n\n")
+
+        for domain in sorted(grouped.keys()):
+            entities = sorted(grouped[domain], key=lambda x: x.get("entity_id", ""))
+            total = len(entities)
+            f.write(f"=== DOMAIN: {domain} ({total}) ===\n")
+            if max_entities and total > max_entities:
+                entities = entities[:max_entities]
+                f.write(f"(showing first {max_entities} entities)\n")
+
+            for s in entities:
+                for ln in format_state_lines_all_attrs(s):
+                    f.write(ln + "\n")
+                f.write("\n")
+
+        f.write("===== END =====\n")
+
+def main():
+    opts = load_options()
+    output_path = opts["output_path"]
+    max_entities = int(opts.get("max_entities", 0) or 0)
+
+    try:
+        all_states = get_states()
+    except Exception as e:
+        ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("===== HOME ASSISTANT STATES REPORT =====\n")
+            f.write(f"Generated at: {ts}\n\n")
+            f.write(f"ERROR fetching /states: {e}\n")
+            f.write("===== END =====\n")
+        return
+
+    # discover domains present in the system
+    available_domains = set()
+    for s in all_states:
+        eid = s.get("entity_id", "")
+        available_domains.add(domain_of(eid))
+
+    # Build final included domains set (flags + extra)
+    selected_domains = build_included_domains(opts, available_domains)
+
+    # Group states by domain, applying filter if any
+    grouped = defaultdict(list)
+    for s in all_states:
+        d = domain_of(s.get("entity_id", ""))
+        if selected_domains and d not in selected_domains:
+            continue
+        grouped[d].append(s)
+
+    write_report(
+        output_path=output_path,
+        grouped=grouped,
+        max_entities=max_entities,
+        available_domains=available_domains,
+        included_domains_effective=selected_domains,
+    )
+
+if __name__ == "__main__":
+    main()
