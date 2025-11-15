@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: HDF5 DataLogger
-version: "0.1.6"
+version: "0.1.7"
 slug: hdf5_datalogger
 description: HDF5 DataLogger add-on
 url: "https://github.com/GGR07/hdf5-datalogger-addon/tree/main/hdf5-datalogger"
