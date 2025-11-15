@@ -4,13 +4,9 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
-# Add your code here
+#!/usr/bin/with-contenv bash
 
-# Declare variables
-declare message
-
-## Print the message the user supplied, defaults to "Hello World..."
-bashio::log.info "${message:="hdf5_datalogger starts..."}"
-
-## Run your program
-exec /usr/bin/my_program
+while true; do
+    python3 /usr/bin/logger.py
+    sleep 60
+done
