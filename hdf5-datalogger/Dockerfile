@@ -1,8 +1,8 @@
 FROM ghcr.io/hassio-addons/base-python:17.0.0
 
-COPY ./requirements.txt ./requirements.txt
+COPY requirements.txt /requirements.txt
 
-RUN pip install -r /requirements.txt
+RUN pip install -r requirements.txt
 
 # Copia la rootfs
 COPY rootfs /
