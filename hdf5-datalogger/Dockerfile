@@ -1,5 +1,5 @@
 # Usa direttamente l'immagine base Python ufficiale degli add-on
-FROM ghcr.io/home-assistant/base:3.15
+FROM ghcr.io/hassio-addons/base:12.2.0
 
 # Copia la rootfs nel container
 COPY rootfs /
