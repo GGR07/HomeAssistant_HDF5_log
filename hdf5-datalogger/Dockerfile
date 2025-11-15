@@ -1,12 +1,12 @@
-# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
-ARG BUILD_FROM
-FROM $BUILD_FROM
+# Usa direttamente l'immagine base Python ufficiale degli add-on
+FROM ghcr.io/home-assistant/base:3.15
 
-# Execute during the build of the image
-ARG TEMPIO_VERSION BUILD_ARCH
-RUN \
-    curl -sSLf -o /usr/bin/tempio \
-    "https://github.com/home-assistant/tempio/releases/download/${TEMPIO_VERSION}/tempio_${BUILD_ARCH}"
-
-# Copy root filesystem
+# Copia la rootfs nel container
 COPY rootfs /
+
+# Assicurati che i file eseguibili abbiano i permessi corretti
+RUN chmod a+x /usr/bin/my_program && \
+    chmod a+x /etc/services.d/hdf5_datalogger/run && \
+    chmod a+x /etc/services.d/hdf5_datalogger/finish
+
+# Fine: l'avvio viene gestito da S6, nessun CMD necessario
