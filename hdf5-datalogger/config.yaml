@@ -1,0 +1,20 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: HDF5 DataLogger
+version: "0.1.4"
+slug: hdf5_datalogger
+description: HDF5 DataLogger add-on
+url: "https://github.com/GGR07/hdf5-datalogger-addon/tree/main/hdf5-datalogger"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+map:
+  - share:rw
+options:
+  message: "Hello world..."
+schema:
+  message: "str?"
+image: "ghcr.io/home-assistant/{arch}-addon-hdf5-datalogger"
