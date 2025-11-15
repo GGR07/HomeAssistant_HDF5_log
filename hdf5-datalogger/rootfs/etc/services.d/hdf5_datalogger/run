@@ -9,11 +9,8 @@
 # Declare variables
 declare message
 
-## Get the 'message' key from the user config options.
-message=$(bashio::config 'message')
-
 ## Print the message the user supplied, defaults to "Hello World..."
-bashio::log.info "${message:="Hello World..."}"
+bashio::log.info "${message:="hdf5_datalogger starts..."}"
 
 ## Run your program
 exec /usr/bin/my_program
