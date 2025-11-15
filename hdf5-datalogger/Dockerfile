@@ -1,4 +1,4 @@
-FROM ghcr.io/hassio-addons/base-python:eb04110
+FROM ghcr.io/hassio-addons/base-python:17.0.0
 
 # Installa Python 3 + pip + requests (Alpine)
 RUN apk add --no-cache python3 py3-pip py3-requests
