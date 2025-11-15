@@ -1,6 +1,6 @@
 FROM ghcr.io/hassio-addons/base-python:17.0.0
 
-RUN pip install ---no-cache-dir requests==2.32.3
+RUN pip install requests
 
 # Copia la rootfs
 COPY rootfs /
