@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bash
 
-OUTPUT_FILE="/share/example_addon_output.txt"
+OUTPUT_FILE="/share/example_addon_output_nuovo.txt"
 SUPERVISOR_TOKEN="$SUPERVISOR_TOKEN"
 API_URL="http://supervisor/core/api"
 
