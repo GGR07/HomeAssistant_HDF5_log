@@ -1,4 +1,5 @@
-FROM ghcr.io/hassio-addons/base:12.2.0
+FROM ghcr.io/hassio-addons/base-python:12.2.0
+
 
 COPY rootfs /
 
