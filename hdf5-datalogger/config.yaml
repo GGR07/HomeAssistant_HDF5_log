@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.1"
+version: "0.2.2"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
