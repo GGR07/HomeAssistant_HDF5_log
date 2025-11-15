@@ -16,78 +16,47 @@ apparmor: true
 
 map:
   - share:rw
-
 options:
   update_interval: 60
   output_path: "/share/example_addon_output.txt"
   max_entities: 0
 
-  # Flag domini comuni (true = includi)
-  include_sensor: true
-  include_binary_sensor: true
-  include_light: false
-  include_switch: false
-  include_climate: false
-  include_cover: false
-  include_fan: false
-  include_media_player: false
-  include_lock: false
-  include_device_tracker: false
-  include_person: false
-  include_camera: false
-  include_alarm_control_panel: false
-  include_scene: false
-  include_script: false
-  include_automation: false
-  include_button: false
-  include_number: false
-  include_select: false
-  include_input_boolean: false
-  include_input_number: false
-  include_input_select: false
-  include_input_text: false
-  include_vacuum: false
-  include_weather: false
-  include_water_heater: false
-  include_valve: false
-  include_siren: false
+  # Domini
+  domain_mode: "presets"     # presets | custom | all
+  domain_presets:
+    - sensors                 # vedi mappa preset sotto
+  domains_include: []         # usati se domain_mode = custom
+  domains_exclude: []         # sempre applicati (override)
+  strict_domains: true        # scarta domini sconosciuti e mostra WARN
 
-  # Domini extra (stringhe libere, normalizzati in minuscolo)
-  include_domains_extra: []
+  # Attributi
+  attributes_mode: "all"      # all | essentials | custom | none
+  attributes_include: []      # usati se attributes_mode = custom
+  attributes_exclude:         # rumore tipico escluso
+    - icon
+    - entity_picture
+    - attribution
+    - editable
+    - restored
+    - supported_features
+    - supported_color_modes
 
 schema:
   update_interval: int
   output_path: str
   max_entities: int
 
-  include_sensor: bool
-  include_binary_sensor: bool
-  include_light: bool
-  include_switch: bool
-  include_climate: bool
-  include_cover: bool
-  include_fan: bool
-  include_media_player: bool
-  include_lock: bool
-  include_device_tracker: bool
-  include_person: bool
-  include_camera: bool
-  include_alarm_control_panel: bool
-  include_scene: bool
-  include_script: bool
-  include_automation: bool
-  include_button: bool
-  include_number: bool
-  include_select: bool
-  include_input_boolean: bool
-  include_input_number: bool
-  include_input_select: bool
-  include_input_text: bool
-  include_vacuum: bool
-  include_weather: bool
-  include_water_heater: bool
-  include_valve: bool
-  include_siren: bool
+  domain_mode: list(presets|custom|all)
+  domain_presets:
+    - str
+  domains_include:
+    - str
+  domains_exclude:
+    - str
+  strict_domains: bool
 
-  include_domains_extra:
+  attributes_mode: list(all|essentials|custom|none)
+  attributes_include:
+    - str
+  attributes_exclude:
     - str

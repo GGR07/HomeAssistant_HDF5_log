@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
-HDF5 DataLogger - v0.2.1 (refactor)
-- REST only: /api/states
-- Domain filtering (flags + extra)
-- Logs ALL attributes
-- Orchestrator delega a moduli
+HDF5 DataLogger - v0.3.0
+- REST /api/states
+- Domini: presets | custom | all + exclude + strict
+- Attributi: all | essentials | custom | none (+ exclude)
 """
 import os
+import sys
+
+# fallback PYTHONPATH se il run non lo esporta
+if "/usr/lib" not in sys.path:
+    sys.path.insert(0, "/usr/lib")
+
 from hdf5_datalogger.config_loader import load_options
 from hdf5_datalogger.ha_client import get_states
 from hdf5_datalogger.domains import (
     discover_available_domains,
-    build_included_domains,
+    build_domains_from_options,
     group_states_by_domain,
 )
 from hdf5_datalogger.report import write_report
@@ -24,6 +29,8 @@ if not TOKEN:
 def main():
     opts = load_options()
     output_path = opts["output_path"]
+    max_entities = int(opts.get("max_entities", 0) or 0)
+
     try:
         all_states = get_states(TOKEN)
     except Exception as e:
@@ -36,15 +43,19 @@ def main():
         return
 
     available_domains = discover_available_domains(all_states)
-    selected_domains = build_included_domains(opts, available_domains)
+    selected_domains, domain_warnings = build_domains_from_options(opts, available_domains)
     grouped = group_states_by_domain(all_states, selected_domains)
 
     write_report(
         output_path=output_path,
         grouped=grouped,
-        max_entities=int(opts.get("max_entities", 0) or 0),
+        max_entities=max_entities,
         available_domains=available_domains,
         included_domains_effective=selected_domains,
+        attributes_mode=(opts.get("attributes_mode") or "all"),
+        attributes_include=opts.get("attributes_include") or [],
+        attributes_exclude=opts.get("attributes_exclude") or [],
+        domain_warnings=domain_warnings,
     )
 
 if __name__ == "__main__":
