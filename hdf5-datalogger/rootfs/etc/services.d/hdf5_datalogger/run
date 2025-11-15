@@ -1,17 +1,13 @@
 #!/usr/bin/with-contenv bash
 set -e
 
+export PYTHONPATH="/usr/lib/hdf5_datalogger:${PYTHONPATH}"
+
 read_interval() {
   if [ -f /data/options.json ]; then
-    # Default 60 se non presente/valido
     local val
     val=$(jq -r '.update_interval // 60' /data/options.json 2>/dev/null || echo 60)
-    # fallback se non numerico
-    if ! echo "$val" | grep -Eq '^[0-9]+$'; then
-      echo 60
-    else
-      echo "$val"
-    fi
+    echo "$val" | grep -Eq '^[0-9]+$' && echo "$val" || echo 60
   else
     echo 60
   fi
@@ -19,6 +15,5 @@ read_interval() {
 
 while true; do
   python3 /usr/bin/logger.py || true
-  SLEEP_SECS=$(read_interval)
-  sleep "$SLEEP_SECS"
+  sleep "$(read_interval)"
 done

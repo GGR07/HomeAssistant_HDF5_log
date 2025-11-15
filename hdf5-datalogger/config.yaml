@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.7"
+version: "0.2.9"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
@@ -20,8 +20,9 @@ map:
 options:
   update_interval: 60
   output_path: "/share/example_addon_output.txt"
+  max_entities: 0
 
-  # Flag per domini (true = includi nel report)
+  # Flag domini comuni (true = includi)
   include_sensor: true
   include_binary_sensor: true
   include_light: false
@@ -51,14 +52,13 @@ options:
   include_valve: false
   include_siren: false
 
-  # Extra domini liberi (per casi non previsti dai flag sopra)
+  # Domini extra (stringhe libere, normalizzati in minuscolo)
   include_domains_extra: []
-
-  max_entities: 0  # 0 = nessun limite
 
 schema:
   update_interval: int
   output_path: str
+  max_entities: int
 
   include_sensor: bool
   include_binary_sensor: bool
@@ -91,11 +91,3 @@ schema:
 
   include_domains_extra:
     - str
-
-  max_entities: int
-
-
-ingress: true
-ingress_port: 0          # consigliato: porta dinamica gestita dal Supervisor
-panel_title: "HDF5 DataLogger"
-panel_icon: "mdi:chart-line"
