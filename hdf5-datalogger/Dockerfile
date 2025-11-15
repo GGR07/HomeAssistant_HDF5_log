@@ -1,7 +1,8 @@
 FROM ghcr.io/hassio-addons/base-python:17.0.0
 
-# Installa Python 3 + pip + requests (Alpine)
-RUN apk add --no-cache python3 py3-pip py3-requests
+# Installa le dipendenze Python dell'add-on
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Copia la rootfs
 COPY rootfs /
