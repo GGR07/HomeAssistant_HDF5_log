@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.4"
+version: "0.2.5"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
@@ -19,19 +19,86 @@ map:
 
 options:
   update_interval: 60
-  output_path: "/share/TEST_V_0_2_0.txt"
-  include_domains: []         # e.g. ["sensor","binary_sensor","light"]
-  include_attributes: []      # e.g. ["friendly_name","unit_of_measurement","device_class"]
-  max_entities: 0             # 0 = nessun limite
+  output_path: "/share/example_addon_output.txt"
+
+  # Flag per domini (true = includi nel report)
+  include_sensor: true
+  include_binary_sensor: true
+  include_light: false
+  include_switch: false
+  include_climate: false
+  include_cover: false
+  include_fan: false
+  include_media_player: false
+  include_lock: false
+  include_device_tracker: false
+  include_person: false
+  include_camera: false
+  include_alarm_control_panel: false
+  include_scene: false
+  include_script: false
+  include_automation: false
+  include_button: false
+  include_number: false
+  include_select: false
+  include_input_boolean: false
+  include_input_number: false
+  include_input_select: false
+  include_input_text: false
+  include_vacuum: false
+  include_weather: false
+  include_water_heater: false
+  include_valve: false
+  include_siren: false
+
+  # Extra domini liberi (per casi non previsti dai flag sopra)
+  include_domains_extra: []
+
+  # Attributi da stampare (oltre a friendly_name se presente)
+  include_attributes: []
+  max_entities: 0  # 0 = nessun limite
 
 schema:
   update_interval: int
   output_path: str
-  include_domains:
+
+  include_sensor: bool
+  include_binary_sensor: bool
+  include_light: bool
+  include_switch: bool
+  include_climate: bool
+  include_cover: bool
+  include_fan: bool
+  include_media_player: bool
+  include_lock: bool
+  include_device_tracker: bool
+  include_person: bool
+  include_camera: bool
+  include_alarm_control_panel: bool
+  include_scene: bool
+  include_script: bool
+  include_automation: bool
+  include_button: bool
+  include_number: bool
+  include_select: bool
+  include_input_boolean: bool
+  include_input_number: bool
+  include_input_select: bool
+  include_input_text: bool
+  include_vacuum: bool
+  include_weather: bool
+  include_water_heater: bool
+  include_valve: bool
+  include_siren: bool
+
+  include_domains_extra:
     - str
+
   include_attributes:
     - str
+
   max_entities: int
+
 
 ingress: true
 ingress_port: 0          # consigliato: porta dinamica gestita dal Supervisor
