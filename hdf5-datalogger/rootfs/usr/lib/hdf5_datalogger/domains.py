@@ -1,76 +1,52 @@
 from collections import defaultdict
-from .constants import PRESET_DOMAINS, DOMAIN_CORRECTIONS
 
 def domain_of(entity_id: str) -> str:
-    return entity_id.split(".", 1)[0].lower() if "." in entity_id else "unknown"
-
-def normalize_domain(d: str) -> str:
-    if not d:
-        return ""
-    d = str(d).strip().lower()
-    return DOMAIN_CORRECTIONS.get(d, d)
+  if not entity_id or "." not in entity_id:
+    return "unknown"
+  return entity_id.split(".", 1)[0].lower()
 
 def discover_available_domains(states: list) -> set:
-    s = set()
-    for st in states:
-        s.add(domain_of(st.get("entity_id", "")))
-    return s
+  s = set()
+  for st in states:
+    eid = st.get("entity_id", "")
+    s.add(domain_of(eid))
+  return s
 
-def build_domains_from_options(opts: dict, available_domains: set) -> tuple[set, list]:
-    """
-    Ritorna (selected_domains, warnings)
-    - selected_domains: set (vuoto = include tutti)
-    - warnings: lista di stringhe da mostrare nel report
-    """
-    warnings = []
-    mode = (opts.get("domain_mode") or "presets").strip().lower()
+def build_included_domains(include_domains_raw: list, available_domains: set):
+  """
+  Ritorna (selected_domains, warnings):
 
-    if mode == "all":
-        return set(), warnings  # set vuoto => include tutti
+  - selected_domains: set di domini da includere.
+      * set vuoto => includi tutti (none filter).
+  - warnings: lista di stringhe da mostrare nel report.
+  """
+  warnings = []
+  if not include_domains_raw:
+    # Nessun filtro di dominio richiesto
+    return set(), warnings
 
-    selected = set()
+  normalized = {str(d).strip().lower() for d in include_domains_raw if str(d).strip()}
+  if not normalized:
+    return set(), warnings
 
-    if mode == "presets":
-        presets = opts.get("domain_presets") or []
-        for p in presets:
-            key = str(p).strip().lower()
-            if key in PRESET_DOMAINS:
-                selected |= PRESET_DOMAINS[key]
-            else:
-                warnings.append(f"Unknown preset: {p}")
-    elif mode == "custom":
-        for d in (opts.get("domains_include") or []):
-            nd = normalize_domain(d)
-            if nd:
-                selected.add(nd)
-    else:
-        warnings.append(f"Unknown domain_mode: {mode}. Using 'all'.")
-        return set(), warnings
+  unknown = sorted([d for d in normalized if d not in available_domains])
+  effective = normalized & available_domains
 
-    # exclude sempre applicato
-    for d in (opts.get("domains_exclude") or []):
-        nd = normalize_domain(d)
-        if nd in selected:
-            selected.discard(nd)
+  if unknown:
+    warnings.append("Unknown domains in include_domains (ignored): " + ", ".join(unknown))
 
-    # strict: scarta domini non presenti realmente
-    if selected:
-        if opts.get("strict_domains", True):
-            unknown = sorted([d for d in selected if d not in available_domains])
-            if unknown:
-                warnings.append("Strict mode: removed unknown domains -> " + ", ".join(unknown))
-            selected = {d for d in selected if d in available_domains}
-        if not selected:
-            warnings.append("Selected domains empty after filtering. Falling back to (all).")
-            return set(), warnings
+  if not effective:
+    warnings.append("No domains from include_domains matched available; falling back to all.")
+    return set(), warnings  # set vuoto => all
 
-    return selected, warnings
+  return effective, warnings
 
 def group_states_by_domain(states: list, selected_domains: set) -> dict:
-    grouped = defaultdict(list)
-    for st in states:
-        d = domain_of(st.get("entity_id", ""))
-        if selected_domains and d not in selected_domains:
-            continue
-        grouped[d].append(st)
-    return grouped
+  grouped = defaultdict(list)
+  for st in states:
+    eid = st.get("entity_id", "")
+    d = domain_of(eid)
+    if selected_domains and d not in selected_domains:
+      continue
+    grouped[d].append(st)
+  return grouped

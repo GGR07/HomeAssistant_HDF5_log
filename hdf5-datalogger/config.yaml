@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.15"
+version: "0.2.16"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
@@ -16,47 +16,20 @@ apparmor: true
 
 map:
   - share:rw
+
 options:
   update_interval: 60
   output_path: "/share/example_addon_output.txt"
   max_entities: 0
 
-  # Domini
-  domain_mode: "presets"     # presets | custom | all
-  domain_presets:
-    - sensors                 # vedi mappa preset sotto
-  domains_include: []         # usati se domain_mode = custom
-  domains_exclude: []         # sempre applicati (override)
-  strict_domains: true        # scarta domini sconosciuti e mostra WARN
-
-  # Attributi
-  attributes_mode: "all"      # all | essentials | custom | none
-  attributes_include: []      # usati se attributes_mode = custom
-  attributes_exclude:         # rumore tipico escluso
-    - icon
-    - entity_picture
-    - attribution
-    - editable
-    - restored
-    - supported_features
-    - supported_color_modes
+  # Se vuoto: tutti i domini.
+  # Se non vuoto: solo questi domini (sensor, binary_sensor, climate, ecc.)
+  include_domains: []
 
 schema:
   update_interval: int
   output_path: str
   max_entities: int
 
-  domain_mode: list(presets|custom|all)
-  domain_presets:
-    - str
-  domains_include:
-    - str
-  domains_exclude:
-    - str
-  strict_domains: bool
-
-  attributes_mode: list(all|essentials|custom|none)
-  attributes_include:
-    - str
-  attributes_exclude:
+  include_domains:
     - str

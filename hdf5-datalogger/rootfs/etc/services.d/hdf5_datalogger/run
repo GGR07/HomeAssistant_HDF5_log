@@ -1,7 +1,8 @@
 #!/usr/bin/with-contenv bash
 set -e
 
-export PYTHONPATH="/usr/lib/hdf5_datalogger:${PYTHONPATH}"
+# parent del package, NON la cartella del package
+export PYTHONPATH="/usr/lib:${PYTHONPATH}"
 
 read_interval() {
   if [ -f /data/options.json ]; then
