@@ -1,62 +1,96 @@
-#!/usr/bin/env python3
-"""
-HDF5 DataLogger - v0.3.0
-- REST /api/states
-- Domini: presets | custom | all + exclude + strict
-- Attributi: all | essentials | custom | none (+ exclude)
-"""
-import os
-import sys
+import json
+from .timeutils import utc_now_z
+from .constants import ESSENTIAL_ATTRS
 
-# fallback PYTHONPATH se il run non lo esporta
-if "/usr/lib" not in sys.path:
-    sys.path.insert(0, "/usr/lib")
+def _format_entity_lines(state: dict, mode: str, attrs_include: list, attrs_exclude: list) -> list:
+    """
+    mode: all | essentials | custom | none
+    """
+    lines = []
+    eid = state.get("entity_id", "unknown")
+    st = state.get("state", "unknown")
+    attrs = state.get("attributes", {}) or {}
+    friendly = attrs.get("friendly_name")
 
-from hdf5_datalogger.config_loader import load_options
-from hdf5_datalogger.ha_client import get_states
-from hdf5_datalogger.domains import (
-    discover_available_domains,
-    build_domains_from_options,
-    group_states_by_domain,
-)
-from hdf5_datalogger.report import write_report
-from hdf5_datalogger.timeutils import utc_now_z
+    lines.append(f"- {eid}")
+    lines.append(f"  state: {st}")
+    if friendly:
+        lines.append(f"  name: {friendly}")
 
-TOKEN = os.getenv("SUPERVISOR_TOKEN")
-if not TOKEN:
-    raise SystemExit("ERROR: SUPERVISOR_TOKEN missing. Ensure homeassistant_api: true.")
+    if mode == "none":
+        return lines
 
-def main():
-    opts = load_options()
-    output_path = opts["output_path"]
-    max_entities = int(opts.get("max_entities", 0) or 0)
+    keys = set(attrs.keys()) - {"friendly_name"}
 
-    try:
-        all_states = get_states(TOKEN)
-    except Exception as e:
-        ts = utc_now_z()
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write("===== HOME ASSISTANT STATES REPORT =====\n")
-            f.write(f"Generated at: {ts}\n\n")
-            f.write(f"ERROR fetching /states: {e}\n")
-            f.write("===== END =====\n")
-        return
+    # exclude "rumorosi" sempre applicato
+    if attrs_exclude:
+        keys -= set(attrs_exclude)
 
-    available_domains = discover_available_domains(all_states)
-    selected_domains, domain_warnings = build_domains_from_options(opts, available_domains)
-    grouped = group_states_by_domain(all_states, selected_domains)
+    if mode == "essentials":
+        keys = keys & ESSENTIAL_ATTRS
+    elif mode == "custom":
+        wanted = {str(k).strip() for k in (attrs_include or []) if str(k).strip()}
+        keys = keys & wanted
+    else:  # "all"
+        pass
 
-    write_report(
-        output_path=output_path,
-        grouped=grouped,
-        max_entities=max_entities,
-        available_domains=available_domains,
-        included_domains_effective=selected_domains,
-        attributes_mode=(opts.get("attributes_mode") or "all"),
-        attributes_include=opts.get("attributes_include") or [],
-        attributes_exclude=opts.get("attributes_exclude") or [],
-        domain_warnings=domain_warnings,
-    )
+    for key in sorted(keys):
+        val = attrs.get(key)
+        if isinstance(val, (dict, list)):
+            try:
+                val_str = json.dumps(val, ensure_ascii=False, separators=(",", ":"))
+            except Exception:
+                val_str = str(val)
+        else:
+            val_str = str(val)
+        lines.append(f"  {key}: {val_str}")
 
-if __name__ == "__main__":
-    main()
+    return lines
+
+def write_report(
+    output_path: str,
+    grouped: dict,
+    max_entities: int,
+    available_domains: set,
+    included_domains_effective: set,
+    attributes_mode: str,
+    attributes_include: list,
+    attributes_exclude: list,
+    domain_warnings: list,
+):
+    ts = utc_now_z()
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("===== HOME ASSISTANT STATES REPORT =====\n")
+        f.write(f"Generated at: {ts}\n\n")
+
+        # Header informativo
+        if included_domains_effective:
+            f.write("Included domains: " + ", ".join(sorted(included_domains_effective)) + "\n")
+        else:
+            f.write("Included domains: (all)\n")
+        f.write("Available domains: " + ", ".join(sorted(available_domains)) + "\n")
+        f.write(f"Attributes mode: {attributes_mode}\n")
+        if attributes_exclude:
+            f.write("Attributes exclude: " + ", ".join(sorted(set(attributes_exclude))) + "\n")
+        if attributes_mode == "custom" and attributes_include:
+            f.write("Attributes include: " + ", ".join(sorted(set(str(x) for x in attributes_include))) + "\n")
+        if domain_warnings:
+            for w in domain_warnings:
+                f.write("WARNING: " + w + "\n")
+        f.write("\n")
+
+        # Corpo
+        for domain in sorted(grouped.keys()):
+            entities = sorted(grouped[domain], key=lambda x: x.get("entity_id", ""))
+            total = len(entities)
+            f.write(f"=== DOMAIN: {domain} ({total}) ===\n")
+            if max_entities and total > max_entities:
+                entities = entities[:max_entities]
+                f.write(f"(showing first {max_entities} entities)\n")
+
+            for s in entities:
+                for ln in _format_entity_lines(s, attributes_mode, attributes_include, attributes_exclude):
+                    f.write(ln + "\n")
+                f.write("\n")
+
+        f.write("===== END =====\n")
