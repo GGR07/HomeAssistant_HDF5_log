@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.3"
+version: "0.2.4"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
@@ -32,3 +32,8 @@ schema:
   include_attributes:
     - str
   max_entities: int
+
+ingress: true
+ingress_port: 0          # consigliato: porta dinamica gestita dal Supervisor
+panel_title: "HDF5 DataLogger"
+panel_icon: "mdi:chart-line"
