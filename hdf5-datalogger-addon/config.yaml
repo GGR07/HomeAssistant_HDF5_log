@@ -1,5 +1,5 @@
 ﻿name: "HDF5 DataLogger"
-version: "0.1.0"
+version: "0.1.1"
 slug: "hdf5_datalogger"
 description: "Addon that reads the Home Assistant structure (areas, devices, entities) and prepares for HDF5 data logging."
 arch:
