@@ -1,4 +1,4 @@
-﻿ARG BUILD_FROM=ghcr.io/hassio-addons/base-python:latest
+ARG BUILD_FROM=ghcr.io/hassio-addons/base-python:latest
 FROM $BUILD_FROM
 
 COPY run.sh /run.sh

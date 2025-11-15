@@ -1,0 +1,60 @@
+# AppArmor security profile for the HDF5 DataLogger add-on
+# More information: https://developers.home-assistant.io/docs/add-ons/apparmor/
+
+#include <tunables/global>
+
+profile hdf5_datalogger flags=(attach_disconnected,mediate_deleted) {
+
+  # Base abstractions required by Home Assistant add-ons
+  # These include Docker environment, basic POSIX capabilities, etc.
+  # DO NOT remove unless you know what you are doing.
+  # Based on the official Home Assistant add-ons example.
+  #include <abstractions/base>
+  #include <abstractions/docker>
+  #include <abstractions/homeassistant>
+
+  ## ---------------------------------------------------------
+  ## Capabilities
+  ## ---------------------------------------------------------
+
+  # Allow minimum necessary capabilities
+  capability chown,
+  capability dac_override,
+  capability fowner,
+  capability fsetid,
+  capability kill,
+  capability setgid,
+  capability setuid,
+  capability sys_chroot,
+
+  # Explicitly deny dangerous capabilities
+  deny capability sys_admin,
+
+  ## ---------------------------------------------------------
+  ## Network access
+  ## ---------------------------------------------------------
+
+  # Allow IPv4 / IPv6 TCP networking
+  network inet stream,
+  network inet6 stream,
+
+  ## ---------------------------------------------------------
+  ## File system access
+  ## ---------------------------------------------------------
+
+  # Allow reading and writing in the add-on's /data directory
+  /data/** rw,
+
+  # Allow the add-on to read its own installation directory
+  /usr/** r,
+  /app/** r,
+
+  # Allow execution of binaries inside the container
+  /usr/bin/** mr,
+  /usr/sbin/** mr,
+  /bin/** mr,
+  /sbin/** mr,
+
+  # Deny access to all other filesystem paths for safety
+  deny /** rwklx,
+}

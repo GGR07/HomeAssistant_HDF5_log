@@ -1,4 +1,4 @@
-﻿# HDF5 DataLogger Add-on
+# HDF5 DataLogger Add-on
 
 Repository for the Home Assistant add-on **HDF5 DataLogger**.
 

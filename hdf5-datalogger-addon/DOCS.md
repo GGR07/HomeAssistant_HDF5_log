@@ -1,4 +1,4 @@
-﻿# HDF5 DataLogger Add-on
+# HDF5 DataLogger Add-on
 
 This add-on will read the Home Assistant structure (areas, devices, entities)
 through the Supervisor API and prepare data for future HDF5 logging.

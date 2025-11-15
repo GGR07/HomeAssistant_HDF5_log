@@ -1,0 +1,19 @@
+{
+  "title": "HDF5 DataLogger",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuración de HDF5 DataLogger",
+        "description": "Este add-on recopila la estructura de Home Assistant y prepara los datos para el registro en HDF5."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Opciones de HDF5 DataLogger",
+        "description": "Configura parámetros opcionales para el add-on HDF5 DataLogger."
+      }
+    }
+  }
+}

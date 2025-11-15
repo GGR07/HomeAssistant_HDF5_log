@@ -1,2 +1,2 @@
-﻿# Utility functions will be added here
+# Utility functions will be added here
 
