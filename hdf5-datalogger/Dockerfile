@@ -1,9 +1,12 @@
-FROM ghcr.io/hassio-addons/base-python:12.2.0
+FROM ghcr.io/hassio-addons/base:latest
 
+# Installa Python 3 + pip + requests (Alpine)
+RUN apk add --no-cache python3 py3-pip py3-requests
 
+# Copia la rootfs
 COPY rootfs /
 
-# Assicurati che i file eseguibili abbiano i permessi corretti
+# Permessi eseguibili
 RUN chmod a+x /usr/bin/logger.py && \
     chmod a+x /etc/services.d/hdf5_datalogger/run && \
     chmod a+x /etc/services.d/hdf5_datalogger/finish
