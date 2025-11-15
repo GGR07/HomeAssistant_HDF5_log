@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.2.5"
+version: "0.2.7"
 slug: "hdf5_datalogger"
 description: "Logs Home Assistant states via REST and writes a human-readable report."
 init: false
@@ -54,8 +54,6 @@ options:
   # Extra domini liberi (per casi non previsti dai flag sopra)
   include_domains_extra: []
 
-  # Attributi da stampare (oltre a friendly_name se presente)
-  include_attributes: []
   max_entities: 0  # 0 = nessun limite
 
 schema:
@@ -92,9 +90,6 @@ schema:
   include_siren: bool
 
   include_domains_extra:
-    - str
-
-  include_attributes:
     - str
 
   max_entities: int
