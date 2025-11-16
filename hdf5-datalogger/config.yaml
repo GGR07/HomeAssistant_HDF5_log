@@ -1,5 +1,5 @@
 name: "HDF5 DataLogger"
-version: "0.3.0"
+version: "0.3.1"
 slug: "hdf5_datalogger"
 description: "Logs selected Home Assistant states to daily HDF5 files and a text report."
 init: false

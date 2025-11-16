@@ -7,6 +7,7 @@ from .domains import domain_of
 from .timeutils import utc_now_z, today_str_local
 from .constants import LAST_VALUES_PATH
 
+
 def _load_last_values(path: str = LAST_VALUES_PATH) -> Dict[str, str]:
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -16,6 +17,7 @@ def _load_last_values(path: str = LAST_VALUES_PATH) -> Dict[str, str]:
     except Exception:
         pass
     return {}
+
 
 def _save_last_values(last_values: Dict[str, str], path: str = LAST_VALUES_PATH) -> None:
     try:
@@ -31,6 +33,7 @@ def _save_last_values(last_values: Dict[str, str], path: str = LAST_VALUES_PATH)
         # non bloccare il logger se fallisce il salvataggio
         pass
 
+
 def _ensure_group(f: h5py.File, domain: str, entity_id: str, attrs: dict) -> h5py.Group:
     group_path = f"/{domain}/{entity_id}"
     grp = f.require_group(group_path)
@@ -40,13 +43,13 @@ def _ensure_group(f: h5py.File, domain: str, entity_id: str, attrs: dict) -> h5p
             try:
                 grp.attrs[key] = attrs[key]
             except Exception:
-                # evitiamo errori su tipi strani
                 grp.attrs[key] = str(attrs[key])
     grp.attrs["domain"] = domain
     grp.attrs["entity_id"] = entity_id
     return grp
 
-def _ensure_datasets(grp: h5py.Group, value_is_numeric: bool) -> Tuple[h5py.Dataset, h5py.Dataset]:
+
+def _ensure_datasets(grp: h5py.Group, first_value_is_numeric: bool) -> Tuple[h5py.Dataset, h5py.Dataset]:
     # dataset timestamp: stringhe ISO-8601
     if "timestamp" not in grp:
         ts_ds = grp.create_dataset(
@@ -60,7 +63,7 @@ def _ensure_datasets(grp: h5py.Group, value_is_numeric: bool) -> Tuple[h5py.Data
 
     # dataset value: float64 o stringa a seconda del primo valore
     if "value" not in grp:
-        if value_is_numeric:
+        if first_value_is_numeric:
             val_ds = grp.create_dataset(
                 "value",
                 shape=(0,),
@@ -79,6 +82,7 @@ def _ensure_datasets(grp: h5py.Group, value_is_numeric: bool) -> Tuple[h5py.Data
 
     return val_ds, ts_ds
 
+
 def _parse_value(raw: str, prefer_numeric: bool) -> Tuple[Any, bool]:
     if not prefer_numeric:
         return raw, False
@@ -86,6 +90,7 @@ def _parse_value(raw: str, prefer_numeric: bool) -> Tuple[Any, bool]:
         return float(raw), True
     except Exception:
         return raw, False
+
 
 def append_states_to_hdf5(
     states: List[dict],
@@ -97,7 +102,7 @@ def append_states_to_hdf5(
 
     Ritorna un dict con statistiche: appended_points, skipped_points, file_path
     """
-    stats = {
+    stats: Dict[str, Any] = {
         "appended_points": 0,
         "skipped_points": 0,
         "file_path": "",
@@ -108,6 +113,7 @@ def append_states_to_hdf5(
 
     today_str = today_str_local()
     filename = f"HDF5_datalogger_{today_str}.h5"
+
     # gestisci eventuale slash finale nel prefisso
     if output_path_prefix.endswith("/") or output_path_prefix.endswith("\\"):
         filepath = output_path_prefix + filename
@@ -123,7 +129,6 @@ def append_states_to_hdf5(
         pass
 
     last_values = _load_last_values()
-
     ts_now = utc_now_z().encode("utf-8")
 
     with h5py.File(filepath, "a") as f:
@@ -131,6 +136,7 @@ def append_states_to_hdf5(
             entity_id = st.get("entity_id", "")
             if not entity_id:
                 continue
+
             domain = domain_of(entity_id)
             new_state_raw = str(st.get("state", ""))
 
@@ -140,32 +146,28 @@ def append_states_to_hdf5(
                 continue
 
             attrs = st.get("attributes", {}) or {}
-
             grp = _ensure_group(f, domain, entity_id, attrs)
 
-            # prova a vedere se è numerico per decidere il dtype iniziale
-            value_parsed, is_numeric = _parse_value(new_state_raw, prefer_numeric=True)
-
-            val_ds, ts_ds = _ensure_datasets(grp, value_is_numeric=is_numeric if ts_ds := None else is_numeric)
-
-            # ricaviamo di nuovo i dataset perché il trucco ts_ds := None non funziona in tutte le versioni
-            val_ds, ts_ds = _ensure_datasets(grp, value_is_numeric=is_numeric)
+            # decidiamo il tipo al primo valore
+            _, is_numeric = _parse_value(new_state_raw, prefer_numeric=True)
+            val_ds, ts_ds = _ensure_datasets(grp, first_value_is_numeric=is_numeric)
 
             # ridimensiona e scrivi
             new_len = val_ds.shape[0] + 1
             val_ds.resize((new_len,))
             ts_ds.resize((new_len,))
 
-            # per dataset float, se conversione fallisce -> NaN
+            # scrivi valore
             if val_ds.dtype.kind in ("f", "i"):
+                from math import nan
                 try:
                     val_ds[-1] = float(new_state_raw)
                 except Exception:
-                    from math import nan
                     val_ds[-1] = nan
             else:
                 val_ds[-1] = str(new_state_raw).encode("utf-8")
 
+            # scrivi timestamp
             ts_ds[-1] = ts_now
 
             last_values[entity_id] = new_state_raw
