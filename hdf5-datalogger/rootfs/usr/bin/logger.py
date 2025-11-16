@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HDF5 DataLogger - v0.2.16
+HDF5 DataLogger - v0.2.17
 
 - REST /api/states
 - Filtro “fisico”:
