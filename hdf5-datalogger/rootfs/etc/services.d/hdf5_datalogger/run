@@ -14,6 +14,37 @@ read_interval() {
   fi
 }
 
+log_startup_summary() {
+  local now ts output interval domains_raw
+
+  now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+  if [ -f /data/options.json ]; then
+    output=$(jq -r '.output_path // "/share/example_addon_output.txt"' /data/options.json 2>/dev/null || echo "/share/example_addon_output.txt")
+    interval=$(jq -r '.update_interval // 60' /data/options.json 2>/dev/null || echo 60)
+
+    domains_raw=$(jq -r '.include_domains // [] | join(", ")' /data/options.json 2>/dev/null || echo "")
+  else
+    output="/share/example_addon_output.txt"
+    interval="60"
+    domains_raw=""
+  fi
+
+  echo "[INFO] ==============================="
+  echo "[INFO] HDF5 DataLogger avviato"
+  echo "[INFO] Timestamp avvio (UTC): ${now}"
+  echo "[INFO] Output file configurato: ${output}"
+  echo "[INFO] Update interval: ${interval} secondi"
+  if [ -n "${domains_raw}" ]; then
+    echo "[INFO] include_domains (config): ${domains_raw}"
+  else
+    echo "[INFO] include_domains (config): (vuoto => domini di default)"
+  fi
+  echo "[INFO] ==============================="
+}
+
+log_startup_summary
+
 while true; do
   python3 /usr/bin/logger.py || true
   sleep "$(read_interval)"

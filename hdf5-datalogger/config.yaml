@@ -1,7 +1,7 @@
 name: "HDF5 DataLogger"
 version: "0.2.16"
 slug: "hdf5_datalogger"
-description: "Logs Home Assistant states via REST and writes a human-readable report."
+description: "Logs selected Home Assistant states using REST API and saves them to a report file."
 init: false
 arch:
   - aarch64
@@ -22,8 +22,8 @@ options:
   output_path: "/share/example_addon_output.txt"
   max_entities: 0
 
-  # Se vuoto: tutti i domini.
-  # Se non vuoto: solo questi domini (sensor, binary_sensor, climate, ecc.)
+  # Se vuoto: usiamo i domini di default
+  # (sensor, binary_sensor, button, climate, light)
   include_domains: []
 
 schema:
