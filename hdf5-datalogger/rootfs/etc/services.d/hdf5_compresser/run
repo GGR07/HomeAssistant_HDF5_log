@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv bash
+set -e
+
+export PYTHONPATH="/usr/lib:${PYTHONPATH}"
+
+echo "[INFO] ==============================="
+echo "[INFO] HDF5 Compresser service avviato"
+echo "[INFO] ==============================="
+
+python3 /usr/bin/compresser.py

@@ -1,7 +1,6 @@
 #!/usr/bin/with-contenv bash
 set -e
 
-# parent del package, NON la cartella del package
 export PYTHONPATH="/usr/lib:${PYTHONPATH}"
 
 read_interval() {
@@ -15,14 +14,13 @@ read_interval() {
 }
 
 log_startup_summary() {
-  local now ts output interval domains_raw
+  local now output interval domains_raw
 
   now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
   if [ -f /data/options.json ]; then
     output=$(jq -r '.output_path // "/share/example_addon_output.txt"' /data/options.json 2>/dev/null || echo "/share/example_addon_output.txt")
     interval=$(jq -r '.update_interval // 60' /data/options.json 2>/dev/null || echo 60)
-
     domains_raw=$(jq -r '.include_domains // [] | join(", ")' /data/options.json 2>/dev/null || echo "")
   else
     output="/share/example_addon_output.txt"
@@ -31,9 +29,9 @@ log_startup_summary() {
   fi
 
   echo "[INFO] ==============================="
-  echo "[INFO] HDF5 DataLogger avviato"
+  echo "[INFO] HDF5 DataLogger (logger) avviato"
   echo "[INFO] Timestamp avvio (UTC): ${now}"
-  echo "[INFO] Output file configurato: ${output}"
+  echo "[INFO] Output file (report testo): ${output}"
   echo "[INFO] Update interval: ${interval} secondi"
   if [ -n "${domains_raw}" ]; then
     echo "[INFO] include_domains (config): ${domains_raw}"

@@ -1,7 +1,7 @@
 name: "HDF5 DataLogger"
-version: "0.2.17"
+version: "0.3.0"
 slug: "hdf5_datalogger"
-description: "Logs selected Home Assistant states using REST API and saves them to a report file."
+description: "Logs selected Home Assistant states to daily HDF5 files and a text report."
 init: false
 arch:
   - aarch64
@@ -19,12 +19,19 @@ map:
 
 options:
   update_interval: 60
-  output_path: "/share/example_addon_output.txt"
+  output_path: "/share/example_addon_output.txt"  # report testuale
   max_entities: 0
 
-  # Se vuoto: usiamo i domini di default
-  # (sensor, binary_sensor, button, climate, light)
+  # Domini inclusi di default se vuoto:
+  # sensor, binary_sensor, button, climate, light
   include_domains: []
+
+  # Prefisso path per i file HDF5 giornalieri:
+  # <output_path_prefix>HDF5_datalogger_<YYYY-MM-DD>.h5
+  output_path_prefix: "/share/hdf5/"
+
+  # Ora locale di compressione giornaliera (HH:MM)
+  compress_time: "02:00"
 
 schema:
   update_interval: int
@@ -33,3 +40,6 @@ schema:
 
   include_domains:
     - str
+
+  output_path_prefix: str
+  compress_time: str

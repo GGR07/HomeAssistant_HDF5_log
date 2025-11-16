@@ -9,3 +9,6 @@ DEFAULT_INCLUDED_DOMAINS = {
     "climate",
     "light",
 }
+
+# Percorso per lo stato degli ultimi valori (per il log "solo se cambia")
+LAST_VALUES_PATH = "/data/hdf5_last_values.json"

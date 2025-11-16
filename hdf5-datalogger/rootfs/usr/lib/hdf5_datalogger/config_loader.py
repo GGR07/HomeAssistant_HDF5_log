@@ -9,7 +9,9 @@ def load_options():
         "output_path": "/share/example_addon_output.txt",
         "max_entities": 0,
         "update_interval": 60,
-        "include_domains": [],  # lista di domini, vuota = usa DEFAULT_INCLUDED_DOMAINS
+        "include_domains": [],
+        "output_path_prefix": "/share/hdf5/",
+        "compress_time": "02:00",
     }
     try:
         with open(OPTIONS_PATH, "r", encoding="utf-8") as f:
